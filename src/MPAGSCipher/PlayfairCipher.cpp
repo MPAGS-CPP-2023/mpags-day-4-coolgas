@@ -53,8 +53,8 @@ void PlayfairCipher::setKey_(const std::string& key)
     }
 
     // Store the playfair cihper key map
-    for (std::size_t i = 0; i < 25; i++) {
-        for (std::size_t j = 0; j < 25; j++) {
+    for (std::size_t i = 0; i < 5; i++) {
+        for (std::size_t j = 0; j < 5; j++) {
             std::size_t idx = i * 5 + j;
             auto p1{ std::make_pair(i, j) };
             auto p2{ std::make_pair(p1, key_[idx])};
