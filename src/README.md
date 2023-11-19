@@ -122,6 +122,7 @@ file supplied with the `-o` option.
         ├── catch.hpp
         ├── CMakeLists.txt
         ├── testCaesarCipher.cpp
+        ├── testPlayfairCipher.cpp
         ├── testCatch.cpp
         ├── testHello.cpp
         ├── testProcessCommandLine.cpp
