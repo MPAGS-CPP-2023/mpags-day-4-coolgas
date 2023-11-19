@@ -44,7 +44,7 @@ void PlayfairCipher::setKey_(const std::string& key)
     key_.erase( std::remove_if(key_.begin(), key_.end(), detectDuplicates), key_.end() );
 
     // Store the coords of each letter
-    for (std::size_t i = 0; i < 25; i++) {
+    for (std::size_t i = 0; i < key_.length(); i++) {
         std::size_t col_idx = i % 5;
         std::size_t row_idx = (i-col_idx)/5;
         auto p1{ std::make_pair(row_idx, col_idx) };
@@ -65,35 +65,103 @@ void PlayfairCipher::setKey_(const std::string& key)
 
 std::string PlayfairCipher::applyCipher(const std::string& inputText, const CipherMode cipherMode) const
 {
+    using coord = std::pair<std::size_t, std::size_t>; // Customized type for coordinates
+
+    std::string input = inputText;
+    std::string digraphs{""};
+    std::string processed_input{""};
 
     // Change J → I
+    std::transform( input.begin(), input.end(), 
+                    input.begin(), [](char c){ return (c=='J') ? 'I' : c; } );
 
     // If repeated chars in a digraph add an X or Q if XX
+    for ( size_t i = 0; i < input.length()-1; i += 2 ) {
+        char first = input[i];
+        char second = input[i+1];
+        if ( first == second ) {
+            second = (second == 'X') ? 'Q' : 'X';
+            i--; // Decrement i to repeat the current letter
+        }
+        digraphs += first;
+        digraphs += second;
+    }
 
     // if the size of input is odd, add a trailing Z
-
+    if ( digraphs.length() % 2 != 0 ) {
+        digraphs += 'Z';
+    }
+    
     // Loop over the input in Digraphs
+    for ( size_t i = 0; i < digraphs.length()-1; i += 2 ) {
+        char first = digraphs[i];
+        char second = digraphs[i+1];
 
-    // - Find the coords in the grid for each digraph
+        //  - Find the coords in the grid for each digraph
+        auto iter1 = str2coords_.find(first);
+        auto iter2 = str2coords_.find(second);
+        coord coord1 = (*iter1).second;
+        coord coord2 = (*iter2).second;
 
-    // - Apply the rules to these coords to get 'new' coords
+        coord coord1_new;
+        coord coord2_new;
+        
+        //  - Apply the rules to these coords to get 'new' coords
+        std::size_t x1 = coord1.first;
+        std::size_t y1 = coord1.second;
+        std::size_t x2 = coord2.first;
+        std::size_t y2 = coord2.second;
 
-    // - Find the letter associated with the new coords
+        std::size_t new_x1{0};
+        std::size_t new_y1{0};
+        std::size_t new_x2{0};
+        std::size_t new_y2{0};
 
-
-    switch (cipherMode)
-    {
-    case CipherMode::Encrypt:
-        std::cout << "Test encryption can be called" <<std::endl;
-        break;
-    case CipherMode::Decrypt:
-        std::cout << "Test decryption can be called" <<std::endl;
-        break;
-    default:
-        break;
+        switch (cipherMode)
+        {
+        case CipherMode::Encrypt:
+            if (x1 == x2) {
+                new_y1 = (y1+1)%5;
+                new_y2 = (y2+1)%5;
+                coord1_new = std::make_pair(x1, new_y1);
+                coord2_new = std::make_pair(x2, new_y2);
+            }else if (y1 == y2) {
+                new_x1 = (x1+1)%5;
+                new_x2 = (x2+1)%5;
+                coord1_new = std::make_pair(new_x1, y1);
+                coord2_new = std::make_pair(new_x2, y2);
+            } else {
+                coord1_new = std::make_pair(x1, y2);
+                coord2_new = std::make_pair(x2, y1);
+            }
+            break;
+        case CipherMode::Decrypt:
+            if (x1 == x2) {
+                new_y1 = (y1+4)%5;
+                new_y2 = (y2+4)%5;
+                coord1_new = std::make_pair(x1, new_y1);
+                coord2_new = std::make_pair(x2, new_y2);
+            }else if (y1 == y2) {
+                new_x1 = (x1+4)%5;
+                new_x2 = (x2+4)%5;
+                coord1_new = std::make_pair(new_x1, y1);
+                coord2_new = std::make_pair(new_x2, y2);
+            } else {
+                coord1_new = std::make_pair(x1, y2);
+                coord2_new = std::make_pair(x2, y1);    
+            }
+            break;   
+        default:
+            break;
+        }
+        //  - Find the letter associated with the new coords
+        auto iter1_new = coords2str_.find(coord1_new);
+        auto iter2_new = coords2str_.find(coord2_new);
+        processed_input += (*iter1_new).second;
+        processed_input += (*iter2_new).second;
     }
     
     // return the text
-    return inputText;
+    return processed_input;
 }
 
